@@ -1,14 +1,13 @@
-from flask import Flask, jsonify, json
-from routes import test
+from flask import Flask, jsonify
+from routes import test, ai
 from db.connection import get_db
-from domains.model import Model
-from domains.feedback import Feedback
 from apis.model import test_index
 
 def create_app():
   app =Flask(__name__)
 
   app.register_blueprint(test.bp)
+  app.register_blueprint(ai.bp)
 
   @app.route("/abc")
   def db_test():
