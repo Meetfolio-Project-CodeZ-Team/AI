@@ -90,7 +90,7 @@ class CustomDataset(torch.utils.data.Dataset):
 
 class KobertClassifier:
 
-  def __init__(self, tokenizer, model):
+  def __init__(self, model, tokenizer):
     # self.model = BertForSequenceClassification.from_pretrained('monologg/kobert', num_labels=5)
     self.model = model
     self.tokenizer = tokenizer
