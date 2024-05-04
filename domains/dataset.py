@@ -1,4 +1,4 @@
-from sqlalchemy import Table, Column, Bignteger, String, DateTime, Text, Enum
+from sqlalchemy import Table, Column, BigInteger, String, DateTime, Text, Enum
 from db.session import Base, engine, metadata
 
 dataset_table = Table('dataset', metadata, autoload_with=engine)

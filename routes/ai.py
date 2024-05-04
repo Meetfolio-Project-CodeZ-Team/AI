@@ -2,7 +2,7 @@ from flask import Blueprint, jsonify, json
 from db.connection import get_db
 from crud.gpt_crud import get_coverletter, save_feedback
 from apis.gpt import gpt_feedback
-from crud.kobert_crud import get_inactive_dataset, get_active_model
+from crud.kobert_crud import get_inactive_dataset, get_active_model, save_model
 from apis.kobert import DataPreprocessor, DataLoaderBuilder, CustomDataset, KobertClassifier, ModelManager
 from apis.clova import ClovaSummarizer
 from core.config import settings
@@ -48,15 +48,15 @@ def feedback(cover_letter_id):
 @bp.route("/admins/model-management/train", methods=['POST'])
 def model_train():
   
-  # DB 초기화
+  # 0. DB 초기화
   db = get_db()
   session = next(db)
 
-  # Class 초기화
+  # 0. Class 초기화
   data_preprocessor = DataPreprocessor()
   data_loadbuilder = DataLoaderBuilder()
   
-  # 학습할 데이터 가져오기
+  # 1. 학습할 데이터 가져오기
   dataset = get_inactive_dataset(session)
   train_texts, test_texts, train_labels, test_labels = data_preprocessor.preprocess_data(dataset)
 
@@ -67,20 +67,21 @@ def model_train():
   train_loader = data_loadbuilder.get_dataloader(train_encodings, train_labels)
   test_loader = data_loadbuilder.get_dataloader(test_encodings, test_labels)
 
-  # TODO : 파인튜닝한 모델로 변경
-  model_path = settings.KOBERT_MODEL
-  model_manager = ModelManager(model_path)
-  model = model_manager.get_model()
+  # 2. 모델 불러오기
+  model_state_dict = get_active_model(session)
+  model_manager = ModelManager()
+  model = model_manager.get_model(model_state_dict)
   
+  # 3. 모델 초기화
   kobert_model = KobertClassifier(kobert_tokenizer, model)
 
+  # 4. 모델 추가 학습
   average_loss = kobert_model.train(train_loader)
   accuracy = kobert_model.evaluate(train_loader)
 
-  response = {"average_loss": round(average_loss, 4), "accuracy": round(accuracy, 4)}
-  return response
+  # 5. 새 모델 저장
+  new_model, new_version = model_manager.save_model(kobert_model, model_state_dict)
+  save_model(session, new_model, new_version, accuracy, loss)
 
-
-@bp.route("/admins/model-management/version/{modelId}", methods=['POST'])
-def model_change():
-  return 'hello test'
+  # response = {"average_loss": round(average_loss, 4), "accuracy": round(accuracy, 4)}
+  return "추가 학습을 마치고, 새로운 모델이 생성되었습니다."

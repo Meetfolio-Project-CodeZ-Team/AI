@@ -2,6 +2,7 @@ from sqlalchemy.orm import Session
 from domains.dataset import Dataset
 from domains.model import Model
 from json import dumps
+from core.config import settings
 
 def patch_analysis(request):
 
@@ -24,3 +25,20 @@ def get_active_model(db: Session):
   model_path = model.file_path
 
   return model_path
+
+def save_model(db: Session, file_name, version, accuracy, loss):
+
+  model = Model(
+    name = "meetfolio_model",
+    file_name = file_name,
+    file_path = settings.MODEL_PATH + file_name,
+    version = version,
+    accuracy = accuracy,
+    loss = loss,
+    created_at=datetime.now(),
+    updated_at=datetime.now()
+  )
+  db.add(model)
+  db.commit()
+
+  return 1

@@ -7,6 +7,7 @@ import torch
 from torch.utils.data import DataLoader, Dataset
 from tqdm.auto import tqdm
 import torch.nn.functional as F
+from core.config import settings
 
 ### Parameter
 max_length = 400
@@ -196,20 +197,31 @@ class KobertClassifier:
 
 class ModelManager:
 
-  def __init__(self, path):
-    self.path = path
+  def __init__(self):
+    self.path = settings.MODEL_PATH
+    self.model_name = settings.MODEL_NAME
+    self.kobert_default = settings.KOBERT_DEFAULT 
 
-  def save_model(self, model, path):
-    torch.save(model, path + '모델명.pt')
-    torch.save(model.state_dict(), '모델명_state_dict.pt')
+  def save_model(self, model, past_file_name):
+    new_version = get_version(past_file_name)
+    new_file_name = self.model_name + new_version + '_state_dict.pt'
+    torch.save(model.state_dict(), new_file_name)
 
-  def get_model(self):
-    model = torch.load(self.path)
-    return model
+    return new_file_name, new_version
 
-  def load_state_dict_model(self):
-    model = torch.load('default_model.pt')
-
-    model_state_dict = torch.load(path)
+  def get_model(self, model_state_dict):
+    model = torch.load(self.kobert_default)
     model.load_state_dict(model_state_dict)
+
     return model
+  
+  def next_version(past_file_name):
+    pattern = r"meetfolio_model_v([\d.]+)_state_dict.pt"
+    match = re.search(pattern, past_file_name)
+    if match:
+      version_str = match.group(1)
+      version = float(version_str)
+      new_version = version + 0.1
+      return new_version
+    else:
+      return 1
