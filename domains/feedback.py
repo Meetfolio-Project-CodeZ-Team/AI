@@ -1,4 +1,4 @@
-from sqlalchemy import Table, Column, Integer, String, DateTime, Text, Enum
+from sqlalchemy import Table, Column, BigInteger, Integer, String, DateTime, Text, Enum
 from db.session import Base, engine, metadata
 
 feedback_table = Table('feedback', metadata, autoload_with=engine)
@@ -6,7 +6,7 @@ feedback_table = Table('feedback', metadata, autoload_with=engine)
 class Feedback(Base):
     __tablename__ = feedback_table
 
-    solution_id = Column(Integer, primary_key=True)
+    solution_id = Column(BigInteger, primary_key=True)
     cover_letter_id = Column(Integer, nullable=False, unique=True)
     solution_id = Column(Integer, primary_key=True, autoincrement=True)
     correction = Column(Text, nullable=False)

@@ -10,4 +10,4 @@ def root():
 
 @bp.route("/test")
 def hello_pybo():
-  return  gpt_feedback()
+  return gpt_feedback()

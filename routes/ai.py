@@ -2,13 +2,21 @@ from flask import Blueprint, jsonify, json
 from db.connection import get_db
 from crud.gpt_crud import get_coverletter, save_feedback
 from apis.gpt import gpt_feedback
-from crud.kobert_crud import get_active_dataset, patch_analysis
+from crud.kobert_crud import get_inactive_dataset, get_active_model
 from apis.kobert import DataPreprocessor, DataLoaderBuilder, CustomDataset, KobertClassifier, ModelManager
 from apis.clova import ClovaSummarizer
 from core.config import settings
 
 # 객체 이름 : 'meetAI' / @RequestMapping : url_prefix 
 bp = Blueprint('meetAI', __name__, url_prefix="/api")
+
+@bp.route("/test")
+def test():
+  db = get_db()
+  session = next(db)
+  
+  model_path = get_active_model(session)
+  return model_path
 
 @bp.route("/coverLetter-analysis/{coverLetterId}", methods=['POST'])
 def analysis():
@@ -49,7 +57,7 @@ def model_train():
   data_loadbuilder = DataLoaderBuilder()
   
   # 학습할 데이터 가져오기
-  dataset = get_active_dataset(session)
+  dataset = get_inactive_dataset(session)
   train_texts, test_texts, train_labels, test_labels = data_preprocessor.preprocess_data(dataset)
 
   train_encodings = data_loadbuilder.get_encoding(train_texts)

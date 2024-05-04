@@ -16,5 +16,8 @@ class Settings:
   CLOVA_URL = os.getenv("CLOVA_URL")
   KOBERT_MODEL=os.getenv("KOBERT_MODEL")
   KOBERT_STATE_DICT=os.getenv("KOBERT_STATE_DICT")
+  MODEL_PATH=os.getenv("MODEL_PATH")
+  MODEL_NAME=os.getenv("MODEL_NAME")
+  MODEL_STATE_DICT=os.getenv("MODEL_STATE_DICT")
 
 settings = Settings()

@@ -1,4 +1,4 @@
-from sqlalchemy import Table, Column, Integer, String, DateTime, Text, Enum
+from sqlalchemy import Table, Column, Bignteger, String, DateTime, Text, Enum
 from db.session import Base, engine, metadata
 
 dataset_table = Table('dataset', metadata, autoload_with=engine)
@@ -6,7 +6,7 @@ dataset_table = Table('dataset', metadata, autoload_with=engine)
 class Dataset(Base):
     __tablename__ = 'dataset'
 
-    dataset_id = Column(Integer, primary_key=True, autoincrement=True)
+    dataset_id = Column(BigInteger, primary_key=True, autoincrement=True)
     data = Column(Text, nullable=False)
     domain = Column(String(255), nullable=True)
     url = Column(String(255), nullable=True)
