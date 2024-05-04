@@ -1,12 +1,36 @@
 from sqlalchemy.orm import Session
 from domains.dataset import Dataset
 from domains.model import Model
+from domains.coverletter import Coverletter
+from domains.analysis import Analysis
 from json import dumps
 from core.config import settings
 
-def patch_analysis(request):
+def patch_coverletter(db: Session, cover_letter_id, data):
 
-  return
+  cover_letter = db.query(Coverletter).filter_by(cover_letter_id=cover_letter_id).first()
+  if cover_letter:
+    cover_letter.keyword_1 = data['keyword1']
+    cover_letter.keyword_2 = data['keyword2']
+    cover_letter.job_keyword = data['job_keyword']
+    db.commit()
+  else:
+    return "Coverletter Not Found"
+
+def save_analysis(db: Session, cover_letter_id, job_suitability, skill_keywords):
+  analysis = Analysis(
+    cover_letter_id = cover_letter_id,
+    job_suitability=job_suitability,
+    keyword_1=skill_keywords[0],
+    keyword_2=skill_keywords[1],
+    keyword_3=skill_keywords[2],
+    created_at=datetime.now(),
+    updated_at=datetime.now()
+  )
+  db.add(model)
+  db.commit()
+
+  return 1
 
 
 def get_inactive_dataset(db: Session) -> str:

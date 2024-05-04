@@ -1,8 +1,8 @@
-from flask import Blueprint, jsonify, json
+from flask import Blueprint, jsonify, json, request
 from db.connection import get_db
 from crud.gpt_crud import get_coverletter, save_feedback
-from apis.gpt import gpt_feedback
-from crud.kobert_crud import get_inactive_dataset, get_active_model, save_model
+from apis.gpt import gpt_feedback, analysis_skill_keyword
+from crud.kobert_crud import get_inactive_dataset, get_active_model, save_model, patch_coverletter, save_analysis
 from apis.kobert import DataPreprocessor, DataLoaderBuilder, CustomDataset, KobertClassifier, ModelManager
 from apis.clova import ClovaSummarizer
 from core.config import settings
@@ -18,9 +18,38 @@ def test():
   model_path = get_active_model(session)
   return model_path
 
-@bp.route("/coverLetter-analysis/{coverLetterId}", methods=['POST'])
-def analysis():
-  return {"message": "hello fastapi"}
+@bp.route("/coverLetter-analysis/<int:cover_letter_id>", methods=['POST'])
+def analysis(cover_letter_id):
+  data = request.json
+  db = get_db()
+  session = next(db)
+
+  patch_coverletter(session, cover_letter_id, data)
+  result = get_coverletter(session, cover_letter_id)
+  data = {"cover_letter_id": result.cover_letter_id,
+          "answer": result.answer,
+          "job_keyword": result.job_keyword}
+
+  data_loadbuilder = DataLoaderBuilder()
+  kobert_tokenizer = data_loadbuilder.get_tokenizer()
+
+  model_state_dict = get_active_model(session)
+  model_manager = ModelManager()
+  model = model_manager.get_model(model_state_dict)
+  
+  kobert_model = KobertClassifier(kobert_tokenizer, model)
+
+  clova = ClovaSummarizer()
+  summary_data = clova.summarize_text(data['job_keyword'], data['answer'])
+  input_data = ''.join(summary_data)
+
+  outputs = kobert_model.predict(input_data)
+  proba = kobert.predict_proba(outputs, data['job_keyword'])
+
+  skill_keywords = analysis_skill_keyword(data['answer'])
+  save_analysis(session, cover_letter_id, proba, skill_keywords)
+
+  return {"job_suitability": proba, "skill_keywords": skill_keywords, "job_keyword": data['job_keyword']}
 
 @bp.route("/coverLetter-feedbacks/<int:cover_letter_id>", methods=['POST'])
 def feedback(cover_letter_id):
@@ -28,6 +57,8 @@ def feedback(cover_letter_id):
   db = get_db()
   session = next(db)
 
+  patch_coverletter(session, cover_letter_id, data)
+  
   # 자기소개서 조회
   result = get_coverletter(session, cover_letter_id)
   
