@@ -3,3 +3,4 @@ SQLAlchemy
 PyMySQL
 Flask-Cors
 flask_restx
+gunicorn
