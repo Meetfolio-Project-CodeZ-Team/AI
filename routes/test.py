@@ -1,5 +1,5 @@
 from flask import Blueprint
-from apis.model import gpt_feedback
+from apis.gpt import gpt_feedback
 
 # 객체 이름 : 'test' / @RequestMapping : url_prefix 
 bp = Blueprint('test', __name__, url_prefix="/")

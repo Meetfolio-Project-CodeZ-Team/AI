@@ -1,7 +1,8 @@
 from flask import Blueprint, jsonify, json
 from db.connection import get_db
-from crud.model_crud import get_coverletter, save_feedback
-from apis.model import gpt_feedback
+from crud.gpt_crud import get_coverletter, save_feedback
+from apis.gpt import gpt_feedback
+from crud.kobert_crud import get_active_dataset
 
 # 객체 이름 : 'meetAI' / @RequestMapping : url_prefix 
 bp = Blueprint('meetAI', __name__, url_prefix="/api")
@@ -35,7 +36,10 @@ def feedback(cover_letter_id):
 
 @bp.route("/admins/model-management/train", methods=['POST'])
 def model_train():
-  return 'hello test'
+  db = get_db()
+  session = next(db)
+  
+  return get_active_dataset(session)
 
 @bp.route("/admins/model-management/version/{modelId}", methods=['POST'])
 def model_change():

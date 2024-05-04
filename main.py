@@ -1,7 +1,7 @@
 from flask import Flask, jsonify
 from routes import test, ai
 from db.connection import get_db
-from apis.model import test_index
+from apis.gpt import test_index
 
 def create_app():
   app =Flask(__name__)
