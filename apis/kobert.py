@@ -7,14 +7,12 @@ import torch
 from torch.utils.data import DataLoader, Dataset
 from tqdm.auto import tqdm
 import torch.nn.functional as F
-import requests
-import json
 
 ### Parameter
-max_len = 400
+max_length = 400
 batch_size = 16
 warmup_ratio = 0.1
-num_epochs = 10
+num_epochs = 15
 max_grad_norm = 1
 log_interval = 200
 learning_rate =  5e-5
@@ -26,7 +24,8 @@ class DataPreprocessor:
     df = pd.DataFrame(datasets)
     df = self._process_job_label(df)
     df = self._process_korean_text(df)
-    return df
+    train_texts, test_texts, train_onehot_labels, test_onehot_labels = self._train_test_split(df)
+    return train_texts, test_texts, train_onehot_labels, test_onehot_labels
 
   def _process_job_label(self, df):
     label_mapping = {"백엔드": 0, "웹개발": 1, "앱개발": 2, "AI": 3, "디자인": 4}
@@ -39,80 +38,67 @@ class DataPreprocessor:
     df['data'] = df['data'].map(lambda x: ' '.join(okt.morphs(x, stem=True)))
     return df
 
+  def _train_test_split(self, df):
+    train_df, test_df = train_test_split(df, test_size=0.2, random_state=42, shuffle=True)
+
+    train_texts = train_df['data'].astype(str).tolist()
+    train_labels = train_df['label'].tolist()
+    test_texts = test_df['data'].astype(str).tolist()
+    test_labels = test_df['label'].tolist()
+
+    train_labels_2d = [[label] for label in train_labels]
+    test_labels_2d = [[label] for label in test_labels]
+
+    encoder = OneHotEncoder(categories=[range(5)], sparse_output=False)
+
+    train_onehot_labels = encoder.fit_transform(train_labels_2d)
+    test_onehot_labels = encoder.transform(test_labels_2d)
+
+    return train_texts, test_texts, train_onehot_labels, test_onehot_labels
+
 class DataLoaderBuilder:
-  def __init__(self, batch_size):
-    self.batch_size = batch_size
+  def __init__(self):
     self.model_name = 'monologg/kobert'
     self.tokenizer = BertTokenizer.from_pretrained(self.model_name)
-    self.train_encodings = None
-    self.test_encodings = None
 
-  def get_tokenizer_encoding(self):
-    self.train_encodings = self.tokenizer(train_texts, truncation=True, padding=True)
-    self.test_encodings = self.tokenizer(test_texts, truncation=True, padding=True)
-
-    return train_encodings, test_encodings
+  def get_encoding(self, texts):
+    encodings = self.tokenizer(texts, truncation=True, padding=True, max_length=max_length)
+    return encodings
 
   def get_dataloader(self, encodings, labels):
     dataset = CustomDataset(encodings, labels)
-
-    return DataLoader(dataset, batch_size=self.batch_size, shuffle=True)
+    return DataLoader(dataset, batch_size=batch_size, shuffle=True)
+  
+  def get_tokenizer(self):
+    return self.tokenizer
 
 # Kobert 모델에 학습 시킬 Dataset 만들기
 class CustomDataset(torch.utils.data.Dataset):
-    def __init__(self, encodings, labels):
-        self.encodings = encodings
-        self.labels = labels
+  def __init__(self, encodings, labels):
+    self.encodings = encodings
+    self.labels = labels
 
-    def __getitem__(self, idx):
-        item = {key: torch.tensor(val[idx]) for key, val in self.encodings.items()}
-        item['labels'] = torch.tensor(self.labels[idx])
-        return item
+  def __getitem__(self, idx):
+    item = {key: torch.tensor(val[idx]) for key, val in self.encodings.items()}
+    item['labels'] = torch.tensor(self.labels[idx])
+    return item
 
-    def __len__(self):
-        return len(self.labels)
+  def __len__(self):
+    return len(self.labels)
 
-# train_dataset = CustomDataset(train_encodings, train_onehot_labels)
-# test_dataset = CustomDataset(test_encodings, test_onehot_labels)
-  
 
 class KobertClassifier:
 
-  def __init__(self, tokenizer):
-    self.model = BertForSequenceClassification.from_pretrained('monologg/kobert', num_labels=5)
+  def __init__(self, tokenizer, model):
+    # self.model = BertForSequenceClassification.from_pretrained('monologg/kobert', num_labels=5)
+    self.model = model
     self.tokenizer = tokenizer
-
-  # 훈련 & 테스트 데이터 분리
-  def data_train_test_split(self, df):
-      train_df, test_df = train_test_split(df, test_size=0.2, random_state=42, shuffle=True)
-
-      train_texts = train_df['data'].astype(str).tolist()
-      train_labels = train_df['label'].tolist()
-      test_texts = test_df['data'].astype(str).tolist()
-      test_labels = test_df['label'].tolist()
-
-      train_labels_2d = [[label] for label in train_labels]
-      test_labels_2d = [[label] for label in test_labels]
-
-      encoder = OneHotEncoder(categories=[range(5)], sparse_output=False)
-
-      train_onehot_labels = encoder.fit_transform(train_labels_2d)
-      test_onehot_labels = encoder.transform(test_labels_2d)
-
-      return train_texts, test_texts, train_onehot_labels, test_onehot_labels
-  
-  # # DataLoader 가져오기
-  # def get_train_test_dataloader(train_dataset, test_dataset):
-  #     train_loader = DataLoader(train_dataset, batch_size=batch_size, shuffle=True)
-  #     test_loader = DataLoader(test_dataset, batch_size=batch_size, shuffle=False)
-
-  #     return train_loader, test_loader
+    self.device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
   # model train
   def train(self, train_loader):
-
-    device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
-    optimizer = torch.optim.Adam(model.parameters(), lr=learning_rate)
+    device = self.device
+    optimizer = torch.optim.Adam(self.model.parameters(), lr=learning_rate)
     criterion = torch.nn.CrossEntropyLoss()
     self.model.to(device)
 
@@ -146,14 +132,14 @@ class KobertClassifier:
     average_loss = total_loss / len(train_loader)
     print(f"Epoch {epoch+1}/{num_epochs} - Average Loss: {average_loss:.4f}")
 
-  return average_loss
+    return average_loss
 
   # model test
   def evaluate(self, test_loader):
-    device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
-    self.model.eval() # 모델을 평가 모드로 전환
-    correct_predictions = 0 # 올바르게 예측된 샘플의 수
-    total_predictions = 0   # 전체 예측한 샘플의 수
+    device = self.device
+    self.model.eval() 
+    correct_predictions = 0
+    total_predictions = 0 
 
     with torch.no_grad():
       for batch in test_loader:
@@ -173,46 +159,57 @@ class KobertClassifier:
 
     return accuracy
 
-
   # predict model
   def predict(self, input_text):
-      # 입력 테스트를 tokenizer를 사용하여 인코딩, 반환된 텐서를 input_endcoding에 저장
-      input_encoding = self.tokenizer.encode_plus(
-          input_text,
-          truncation=True,
-          padding=True,
-          return_tensors='pt'
-      )
+    device = self.device
+    # 입력 테스트를 tokenizer를 사용하여 인코딩, 반환된 텐서를 input_endcoding에 저장
+    input_encoding = self.tokenizer.encode_plus(
+        input_text,
+        truncation=True,
+        padding=True,
+        return_tensors='pt'
+    )
 
-      input_ids = input_encoding['input_ids'].to(device)
-      attention_mask = input_encoding['attention_mask'].to(device)
+    input_ids = input_encoding['input_ids'].to(device)
+    attention_mask = input_encoding['attention_mask'].to(device)
 
-      self.model.eval()
-      with torch.no_grad():
-          # 모델에 입력과 어텐션 마스크를 전달하여 출력을 계산
-          outputs = self.model(input_ids, attention_mask=attention_mask)
-          _, predicted_labels = torch.max(outputs.logits, dim=1)
-      predicted_labels = predicted_labels.item()
+    self.model.eval()
+    with torch.no_grad():
+        # 모델에 입력과 어텐션 마스크를 전달하여 출력을 계산
+        outputs = self.model(input_ids, attention_mask=attention_mask)
+        _, predicted_labels = torch.max(outputs.logits, dim=1)
+    predicted_labels = predicted_labels.item()
 
-      print(predicted_labels)
+    print(f"Predicted_Labels: {predicted_labels}")
 
-      return outputs
+    return outputs
 
   def predict_proba(self, outputs, job):
-      # 예측된 로짓 값을 소프트맥스 함수를 통해 확률로 변환
-      predicted_probs = F.softmax(outputs.logits, dim=1)
-      reverse_mapping = {0: "백엔드", 1: "웹개발", 2: "앱개발", 3: "AI", 4: "디자인"}
+    # 예측된 로짓 값을 소프트맥스 함수를 통해 확률로 변환
+    predicted_probs = F.softmax(outputs.logits, dim=1)
+    reverse_mapping = {0: "백엔드", 1: "웹개발", 2: "앱개발", 3: "AI", 4: "디자인"}
 
-      # 가장 높은 확률을 가진 클래스의 인덱스를 예측 레이블로 선택
-      predicted_label_index = torch.argmax(predicted_probs, dim=1)
-      predicted_probability = predicted_probs[0][predicted_label_index]
+    proba = predicted_probs[0][job].item()
+    print(f"사용자가 입력한 직무에 대한 역량 분석 : {proba}")
 
-      print("사용자가 입력한 직무에 대한 역량 분석")
-      proba = predicted_probs[0][job].item()
+    return proba
 
-      return proba
+class ModelManager:
 
-  def save_model(path):
-      torch.save(self.model, path + '모델명.pt')
-      torch.save(self.model.state_dict(), '모델명_state_dict.pt')
+  def __init__(self, path):
+    self.path = path
 
+  def save_model(self, model, path):
+    torch.save(model, path + '모델명.pt')
+    torch.save(model.state_dict(), '모델명_state_dict.pt')
+
+  def get_model(self):
+    model = torch.load(self.path)
+    return model
+
+  def load_state_dict_model(self):
+    model = torch.load('default_model.pt')
+
+    model_state_dict = torch.load(path)
+    model.load_state_dict(model_state_dict)
+    return model
