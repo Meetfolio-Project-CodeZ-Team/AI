@@ -1,4 +1,4 @@
-from flask import Flask, jsonify
+from flask import Flask, jsonify, request
 from routes import test, ai
 from db.connection import get_db
 from apis.gpt import test_index
@@ -30,6 +30,13 @@ def create_app():
                               "name": model.name,
                               "status": model.status} for model in data])
     return results
+  
+  ## RequestBody 테스트
+  @app.route("/example", methods=["POST"])
+  def test_body():
+    data =request.json
+    print(data)
 
+    return jsonify(data)
     
   return app

@@ -11,5 +11,8 @@ class Settings:
   DB_DATABASE = os.getenv("MYSQL_DB")
   GPT_KEY=os.getenv("GPT_KEY")
   DB_URL = f'mysql+pymysql://{DB_USERNAME}:{DB_PASSWORD}@{DB_HOST}:{DB_PORT}/{DB_DATABASE}'
+  CLOVA_ID = os.getenv("CLOVA_URL")
+  CLOVA_SECRET = os.getenv("CLOVA_SECRET")
+  CLOVA_URL = os.getenv("CLOVA_URL")
 
 settings = Settings()
