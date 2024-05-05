@@ -91,7 +91,7 @@ def gpt_feedback(job, keyword, content):
   result['feedback'] = remove_special_characters(content)
 
   recommend = recommend_title(job, content)
-  result['recommend'] = extract_questions(recommend)
+  result['recommend'] = extract_texts(recommend)
 
   return result
 
@@ -109,7 +109,7 @@ def extract_texts(text):
     extracted_texts = []
     for match in matches:
         num, text = match
-        text = text.replace('\n', '')
+        text = re.sub(r'[\"/\\\n]', '', text)
         extracted_texts.append(text)
 
     return extracted_texts

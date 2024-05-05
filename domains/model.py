@@ -13,7 +13,7 @@ class Model(Base):
   accuracy = Column(Float, nullable=False)
   loss = Column(Float, nullable=False)
   version = Column(Numeric(precision=38, scale=2), nullable=False)
-  status = Column(Enum('ACTIVE', 'INACTIVE'), default='ACTIVE', nullable=False)
+  status = Column(Enum('ACTIVE', 'INACTIVE'), default='INACTIVE', nullable=False)
   activated_date = Column(DateTime(6), nullable=False)
   created_at = Column(DateTime(6), nullable=False)
   updated_at = Column(DateTime(6), nullable=False)
