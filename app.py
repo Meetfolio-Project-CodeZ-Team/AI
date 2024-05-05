@@ -1,42 +1,34 @@
 from flask import Flask, jsonify, request
-from routes import test, ai
+from routes.ai import ai
 from db.connection import get_db
-from apis.gpt import test_index
+from flask_restx import Api, Resource
+from flask_cors import CORS
+from crud.kobert_crud import get_active_model
 
 def create_app():
+
   app =Flask(__name__)
+  CORS(app, resources={r'*': {'origins': ['http://www.meetfolio.kro.kr', 'http://localhost:3000']}})
+  # API 객체 등록
+  api = Api(
+    app,
+    version='v1.0',
+    title="Meetfolio's AI API Server",
+    description="Meetfolio's Kobert, GPT, Clova API Server!",
+    terms_url="/",
+  )
+  api.add_namespace(ai, "/api")
 
-  app.register_blueprint(test.bp)
-  app.register_blueprint(ai.bp)
-
-  @app.route("/abc")
-  def db_test():
-
-    db = get_db()
-    session = next(db)
-    # data = session.query(Model).all()
-    data = test_index(session)
-    # 데이터를 JSON 형식으로 변환
-    results = jsonify([{"model_id": model.model_id,
-                              "accuracy": model.accuracy,
-                              "loss": model.loss,
-                              "version": model.version,
-                              "activated_date": model.activated_date,
-                              "created_at": model.created_at,
-                              "learned_date": model.learned_date,
-                              "updated_at": model.updated_at,
-                              "file_name": model.file_name,
-                              "file_path": model.file_path,
-                              "name": model.name,
-                              "status": model.status} for model in data])
-    return results
-  
+ 
   ## RequestBody 테스트
-  @app.route("/example", methods=["POST"])
-  def test_body():
-    data =request.json
-    print(data)
+  @api.route("/test")
+  class Test(Resource):
+    def post(self):
+      """HELLO FLASK"""
+      db = get_db()
+      session = next(db)
+      result = get_active_model(session)
 
-    return jsonify(data)
+      return result
     
   return app

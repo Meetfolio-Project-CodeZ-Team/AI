@@ -59,8 +59,7 @@ class DataPreprocessor:
 
 class DataLoaderBuilder:
   def __init__(self):
-    self.model_name = 'monologg/kobert'
-    self.tokenizer = BertTokenizer.from_pretrained(self.model_name)
+    self.tokenizer = BertTokenizer.from_pretrained('monologg/kobert')
 
   def get_encoding(self, texts):
     encodings = self.tokenizer(texts, truncation=True, padding=True, max_length=max_length)
@@ -138,7 +137,7 @@ class KobertClassifier:
   # model test
   def evaluate(self, test_loader):
     device = self.device
-    self.model.eval() 
+    self.model.eval()
     correct_predictions = 0
     total_predictions = 0 
 
@@ -161,10 +160,10 @@ class KobertClassifier:
     return accuracy
 
   # predict model
-  def predict(self, input_text):
+  def predict(self, tokenizer, input_text):
     device = self.device
     # 입력 테스트를 tokenizer를 사용하여 인코딩, 반환된 텐서를 input_endcoding에 저장
-    input_encoding = self.tokenizer.encode_plus(
+    input_encoding = tokenizer.encode_plus(
         input_text,
         truncation=True,
         padding=True,
@@ -188,7 +187,8 @@ class KobertClassifier:
   def predict_proba(self, outputs, job):
     # 예측된 로짓 값을 소프트맥스 함수를 통해 확률로 변환
     predicted_probs = F.softmax(outputs.logits, dim=1)
-    reverse_mapping = {0: "백엔드", 1: "웹개발", 2: "앱개발", 3: "AI", 4: "디자인"}
+    label_mapping = {"BACKEND": 0, "WEB": 1, "APP": 2, "DESIGN": 3, "AI": 4}
+    job = label_mapping[job]
 
     proba = predicted_probs[0][job].item()
     print(f"사용자가 입력한 직무에 대한 역량 분석 : {proba}")
@@ -211,7 +211,7 @@ class ModelManager:
 
   def get_model(self, model_state_dict):
     model = torch.load(self.kobert_default)
-    model.load_state_dict(model_state_dict)
+    # model.load_state_dict(torch.load(model_state_dict))
 
     return model
   
