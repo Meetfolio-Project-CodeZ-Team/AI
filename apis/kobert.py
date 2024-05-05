@@ -8,6 +8,7 @@ from torch.utils.data import DataLoader, Dataset
 from tqdm.auto import tqdm
 import torch.nn.functional as F
 from core.config import settings
+import re
 
 ### Parameter
 max_length = 400
@@ -203,25 +204,24 @@ class ModelManager:
     self.kobert_default = settings.KOBERT_DEFAULT 
 
   def save_model(self, model, past_file_name):
-    new_version = get_version(past_file_name)
-    new_file_name = self.model_name + new_version + '_state_dict.pt'
-    torch.save(model.state_dict(), new_file_name)
+    new_version = self.next_version(past_file_name)
+    new_file_name = self.model_name + new_version + '.pt'
+    torch.save(model, self.path + new_file_name)
 
     return new_file_name, new_version
 
-  def get_model(self, model_state_dict):
-    model = torch.load(self.kobert_default)
-    # model.load_state_dict(torch.load(model_state_dict))
-
+  def get_model(self, model_path):
+    # model = torch.load(self.kobert_default)
+    model = torch.load(str(model_path))
     return model
   
-  def next_version(past_file_name):
-    pattern = r"meetfolio_model_v([\d.]+)_state_dict.pt"
+  def next_version(self, past_file_name):
+    pattern = r"meetfolio_model_v([\d.]+).pt"
     match = re.search(pattern, past_file_name)
     if match:
       version_str = match.group(1)
       version = float(version_str)
       new_version = version + 0.1
-      return new_version
+      return str(new_version)
     else:
       return 1

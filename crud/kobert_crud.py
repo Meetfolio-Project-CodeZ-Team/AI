@@ -33,7 +33,6 @@ def save_analysis(db: Session, cover_letter_id, job_suitability, skill_keywords)
 
   return 1
 
-
 def get_inactive_dataset(db: Session) -> str:
   datasets = db.query(Dataset).filter(Dataset.status == 'INACTIVE').all()
   dataset_list = []
@@ -43,7 +42,11 @@ def get_inactive_dataset(db: Session) -> str:
           "job": dataset.job
       }
       dataset_list.append(dataset_dict)
-  return dataset_list
+  
+  # 가져온 데이터셋 -> 'ACTIVE'로 벼경
+  # for dataset in datasets:
+  #   dataset.status = 'ACTIVE'
+  return datasets, dataset_list
 
 def get_active_model(db: Session):
   model = db.query(Model).filter(Model.status == 'ACTIVE').one()
@@ -66,4 +69,4 @@ def save_model(db: Session, file_name, version, accuracy, loss):
   db.add(model)
   db.commit()
 
-  return 1
+  return model.model_id
