@@ -13,7 +13,7 @@ class Settings:
 
   GPT_KEY=os.getenv("GPT_KEY")
 
-  CLOVA_ID = os.getenv("CLOVA_URL")
+  CLOVA_ID = os.getenv("CLOVA_ID")
   CLOVA_SECRET = os.getenv("CLOVA_SECRET")
   CLOVA_URL = os.getenv("CLOVA_URL")
 

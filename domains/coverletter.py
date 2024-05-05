@@ -1,10 +1,10 @@
 from sqlalchemy import Table, Column, BigInteger, Text, String, Enum
 from db.session import Base, engine, metadata
 
-coverletter_table = Table('cover_letter', metadata, autoload_with=engine)
+cover_letter = Table('cover_letter', metadata, autoload_with=engine)
 
 class Coverletter(Base):
-  __tablename__ = coverletter_table
+  __tablename__ = 'cover_letter'
 
   cover_letter_id = Column(BigInteger, primary_key=True)
   answer = Column(Text, nullable=False)

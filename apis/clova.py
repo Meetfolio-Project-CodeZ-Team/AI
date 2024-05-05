@@ -6,8 +6,8 @@ class ClovaSummarizer:
     self.client_id = settings.CLOVA_ID
     self.client_secret = settings.CLOVA_SECRET
     self.headers = {
-        "X-NCP-APIGW-API-KEY-ID": client_id,
-        "X-NCP-APIGW-API-KEY": client_secret,
+        "X-NCP-APIGW-API-KEY-ID": self.client_id,
+        "X-NCP-APIGW-API-KEY": self.client_secret,
         "Content-Type": "application/json"
     }
     self.url= settings.CLOVA_URL
@@ -27,7 +27,7 @@ class ClovaSummarizer:
             "language": self.language,
             "model": self.model,
             "tone": self.tone,
-            "summaryCount" : self.summary_count
+            "summaryCount" : self.summaryCount
         }
     }
     response = requests.post(self.url, data=json.dumps(data), headers=self.headers)
@@ -42,5 +42,5 @@ class ClovaSummarizer:
     result = json.loads(response.text)
     results = result['summary']
     result_list = [text.replace('\n', '') for text in results.split(".")]
-
-    return result_list
+    concat_result = ' '.join(result_list)
+    return concat_result

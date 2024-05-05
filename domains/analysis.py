@@ -1,10 +1,10 @@
 from sqlalchemy import Table, Column, BigInteger, Integer, String, DateTime, Enum, Float
 from db.session import Base, engine, metadata
 
-analysis_table = Table('analysis', metadata, autoload_with=engine)
+analysis = Table('analysis', metadata, autoload_with=engine)
 
 class Analysis(Base):
-  __tablename__ = 'analysis_table'
+  __tablename__ = 'analysis'
 
   analysis_id = Column(BigInteger, primary_key=True, autoincrement=True)
   job_suitability = Column(Float, nullable=False)

@@ -5,10 +5,6 @@ from core.config import settings
 from langchain.chat_models import ChatOpenAI
 from langchain.prompts import ChatPromptTemplate, SystemMessagePromptTemplate, AIMessagePromptTemplate, HumanMessagePromptTemplate
 
-def test_index(db: Session):
-
-  return db.query(Model).all()
-
 # GPT를 통한 자기소개서 첨삭
 def feedback_coverletter(job, keyword, content):
 
@@ -124,7 +120,7 @@ def extract_texts(text):
 
 def analysis_skill_keyword(content):
 
-  chatgpt = ChatOpenAI(model_name="gpt-3.5-turbo-1106", openai_api_key=openai_key, temperature=0.8)
+  chatgpt = ChatOpenAI(model_name="gpt-3.5-turbo-1106", openai_api_key=settings.GPT_KEY, temperature=0.8)
 
   # System Prompt
   analysis_template = '''

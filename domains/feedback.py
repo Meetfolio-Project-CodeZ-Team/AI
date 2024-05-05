@@ -1,10 +1,10 @@
 from sqlalchemy import Table, Column, BigInteger, Integer, String, DateTime, Text, Enum
 from db.session import Base, engine, metadata
 
-feedback_table = Table('feedback', metadata, autoload_with=engine)
+feedback = Table('feedback', metadata, autoload_with=engine)
 
 class Feedback(Base):
-  __tablename__ = feedback_table
+  __tablename__ = 'feedback'
 
   solution_id = Column(BigInteger, primary_key=True)
   cover_letter_id = Column(Integer, nullable=False, unique=True)
