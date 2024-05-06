@@ -25,6 +25,10 @@ feedback_response = ai.model('Feedback Response DTO', {
   "feedback": fields.String(description="AI 자기소개서 피드백 결과"),
   "recommend": fields.List(fields.String(description='AI 자기소개서 추천 문항 리스트'))
 })
+train_response = ai.model('Model Train Response DTO', {
+  "model_id": fields.Integer(description="모델 아이디"),
+  "created_at": fields.DateTime(description="요청 응답 시간")
+})
 
 @ai.route("/coverLetter-analysis/<int:cover_letter_id>")
 class Analysis(Resource):
@@ -97,6 +101,7 @@ class Feedback(Resource):
 
 @ai.route("/admins/model-management/train")
 class ModelTrain(Resource):
+  @ai.response(200, 'Success', train_response)
   def post(self):
     """Kobert 모델 추가 학습 API"""
 
