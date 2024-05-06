@@ -1,9 +1,40 @@
 from sqlalchemy.orm import Session
 from domains.dataset import Dataset
+from domains.model import Model
+from domains.coverletter import Coverletter
+from domains.analysis import Analysis
 from json import dumps
+from core.config import settings
+from datetime import datetime
 
-def get_active_dataset(db: Session) -> str:
-  datasets = db.query(Dataset).filter(Dataset.status == 'ACTIVE').all()
+def patch_coverletter(db: Session, cover_letter_id, data):
+
+  cover_letter = db.query(Coverletter).filter(Coverletter.cover_letter_id==cover_letter_id).first()
+  if cover_letter:
+    cover_letter.keyword_1 = data['keyword1']
+    cover_letter.keyword_2 = data['keyword2']
+    cover_letter.job_keyword = data['job_keyword']
+    db.commit()
+  else:
+    return "Coverletter Not Found"
+
+def save_analysis(db: Session, cover_letter_id, job_suitability, skill_keywords):
+  analysis = Analysis(
+    cover_letter_id = cover_letter_id,
+    job_suitability=round(job_suitability,4),
+    keyword_1=skill_keywords[0],
+    keyword_2=skill_keywords[1],
+    keyword_3=skill_keywords[2],
+    created_at=datetime.now(),
+    updated_at=datetime.now()
+  )
+  db.add(analysis)
+  db.commit()
+
+  return 1
+
+def get_inactive_dataset(db: Session) -> str:
+  datasets = db.query(Dataset).filter(Dataset.status == 'INACTIVE').all()
   dataset_list = []
   for dataset in datasets:
       dataset_dict = {
@@ -11,50 +42,31 @@ def get_active_dataset(db: Session) -> str:
           "job": dataset.job
       }
       dataset_list.append(dataset_dict)
-  return dataset_list
+  
+  # 가져온 데이터셋 -> 'ACTIVE'로 벼경
+  # for dataset in datasets:
+  #   dataset.status = 'ACTIVE'
+  return datasets, dataset_list
 
-def parse_train_data_label(datasets):
-   
-   return
-   
-### 한글 전처리
-# def konlpy_okt(df):
-#     okt = Okt()
-#     df['data'] = df['data'].map(lambda x : ' '.join(okt.morphs(x, stem=True)))
-#     return df
+def get_active_model(db: Session):
+  model = db.query(Model).filter(Model.status == 'ACTIVE').one()
+  model_path = model.file_path
 
-#### 백엔드 -> 0 으로 변환 함수
-def label_to_int(df):
+  return model_path
 
-  label_mapping = {"백엔드": 0, "웹개발": 1, "앱개발": 2, "AI": 3, "디자인": 4}
-  df['label'] = df['label'].map(label_mapping)
+def save_model(db: Session, file_name, version, accuracy, loss):
 
-### 훈련 & 테스트 데이터 분리
-def data_train_test_split(df):
-    train_df, test_df = train_test_split(df, test_size=0.2, random_state=42, shuffle=True)
+  model = Model(
+    name = "meetfolio_model",
+    file_name = file_name,
+    file_path = settings.MODEL_PATH + file_name,
+    version = version,
+    accuracy = accuracy,
+    loss = loss,
+    created_at=datetime.now(),
+    updated_at=datetime.now()
+  )
+  db.add(model)
+  db.commit()
 
-    train_texts = train_df['data'].astype(str).tolist()
-    train_labels = train_df['label'].tolist()
-    test_texts = test_df['data'].astype(str).tolist()
-    test_labels = test_df['label'].tolist()
-
-    train_labels_2d = [[label] for label in train_labels]
-    test_labels_2d = [[label] for label in test_labels]
-
-    encoder = OneHotEncoder(categories=[range(5)], sparse_output=False)
-
-    train_onehot_labels = encoder.fit_transform(train_labels_2d)
-    test_onehot_labels = encoder.transform(test_labels_2d)
-
-    return train_texts, test_texts, train_onehot_labels, test_onehot_labels
-
-### kobert model 가져오기
-def get_kobert_model():
-    model_name = 'monologg/kobert'
-
-    tokenizer = BertTokenizer.from_pretrained(model_name)
-    train_encodings = tokenizer(train_texts, truncation=True, padding=True)
-    test_encodings = tokenizer(test_texts, truncation=True, padding=True)
-
-    return tokenizer, train_encodings, test_encodings
-
+  return model.model_id
