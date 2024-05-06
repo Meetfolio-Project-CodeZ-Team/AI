@@ -5,10 +5,6 @@ from core.config import settings
 from langchain.chat_models import ChatOpenAI
 from langchain.prompts import ChatPromptTemplate, SystemMessagePromptTemplate, AIMessagePromptTemplate, HumanMessagePromptTemplate
 
-def test_index(db: Session):
-
-  return db.query(Model).all()
-
 # GPT를 통한 자기소개서 첨삭
 def feedback_coverletter(job, keyword, content):
 
@@ -95,7 +91,7 @@ def gpt_feedback(job, keyword, content):
   result['feedback'] = remove_special_characters(content)
 
   recommend = recommend_title(job, content)
-  result['recommend'] = extract_questions(recommend)
+  result['recommend'] = extract_texts(recommend)
 
   return result
 
@@ -106,14 +102,50 @@ def remove_special_characters(text):
     return cleaned_text
 
 # 추천 문항 파싱
-def extract_questions(text):
+def extract_texts(text):
     matches = re.findall(r'(\d+)\.\s+(.*?)(?=\d+\.\s|$)', text, re.DOTALL)
 
     # 추출된 문장을 리스트에 저장
-    extracted_sentences = []
+    extracted_texts = []
     for match in matches:
-        num, sentence = match
-        sentence = sentence.replace('\n', '')
-        extracted_sentences.append(sentence)
+        num, text = match
+        text = re.sub(r'[\"/\\\n]', '', text)
+        extracted_texts.append(text)
 
-    return extracted_sentences
+    return extracted_texts
+
+## ==================== ##
+
+# kobert 두드러진 역량 분석
+
+def analysis_skill_keyword(content):
+
+  chatgpt = ChatOpenAI(model_name="gpt-3.5-turbo-1106", openai_api_key=settings.GPT_KEY, temperature=0.8)
+
+  # System Prompt
+  analysis_template = '''
+      당신은 IT 기업의 전문가로, 채용 관련 업무에 종사하는 전문가로서, 자기소개서를 분석하여 지원자의 역량을 추출하는 역할을 맡고 있습니다.
+      다양한 자기소개서를 검토하며, 현재 IT 기술에 대한 깊은 이해를 바탕으로 지원자의 뛰어난 역량을 15글자 이하로 3개 추출해야 합니다.
+      아래는 지원자의 자기소개서 내용입니다.
+
+      - 아래
+      {content} .json
+  '''
+  system_prompt = SystemMessagePromptTemplate.from_template(analysis_template)
+
+  # Human Prompt
+  human_template = '{content}'.format(content='{content}')
+  human_prompt = HumanMessagePromptTemplate.from_template(human_template)
+
+  # chat_prompt 설정
+  chat_prompt = ChatPromptTemplate.from_messages(
+      [
+          system_prompt,
+          human_prompt
+      ]
+  )
+  result = chatgpt(chat_prompt.format_prompt(content=content).to_messages())
+
+  skill_keyword = extract_texts(result.content)
+
+  return skill_keyword

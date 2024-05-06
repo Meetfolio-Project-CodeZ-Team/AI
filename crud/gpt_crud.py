@@ -3,9 +3,6 @@ from domains.coverletter import Coverletter
 from datetime import datetime
 from domains.feedback import Feedback
 
-# def get_items(db: Session):
-#   return db.query(Test).all()
-
 def get_coverletter(db: Session, coverletter_id: int):
 
   return db.query(Coverletter).filter(Coverletter.cover_letter_id == coverletter_id).one()
