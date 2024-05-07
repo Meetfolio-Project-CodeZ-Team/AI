@@ -6,6 +6,7 @@ from domains.analysis import Analysis
 from json import dumps
 from core.config import settings
 from datetime import datetime
+from sqlalchemy.orm.exc import NoResultFound
 
 def patch_coverletter(db: Session, cover_letter_id, data):
 
@@ -49,8 +50,12 @@ def get_inactive_dataset(db: Session) -> str:
   return datasets, dataset_list
 
 def get_active_model(db: Session):
-  model = db.query(Model).filter(Model.status == 'ACTIVE').one()
-  model_path = model.file_path
+  try:
+    model = db.query(Model).filter(Model.status == 'ACTIVE').one()
+    model_path = model.file_path
+
+  except NoResultFound:
+    model_path = '/home/t24105/v0.9src/ai/model/meetfolio_model_v1.pt'
 
   return model_path
 
