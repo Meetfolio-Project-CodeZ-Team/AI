@@ -30,7 +30,7 @@ class DataPreprocessor:
     return train_texts, test_texts, train_onehot_labels, test_onehot_labels
 
   def _process_job_label(self, df):
-    label_mapping = {"백엔드": 0, "웹개발": 1, "앱개발": 2, "AI": 3, "디자인": 4}
+    label_mapping = {"BACKEND": 0, "WEB": 1, "APP": 2, "DESIGN": 3, "AI": 4}
     df['label'] = df['job'].map(label_mapping)
     df.drop(columns=['job'], inplace=True)
     return df
