@@ -10,7 +10,7 @@ class Dataset(Base):
     data = Column(Text, nullable=False)
     domain = Column(String(255), nullable=True)
     url = Column(String(255), nullable=True)
-    job = Column(Enum('백엔드', '웹개발', '앱개발', '디자인', 'AI'), nullable=False)
+    job = Column(Enum('BACKEND', 'WEB', 'APP', 'DESIGN', 'AI'), nullable=False)
     status = Column(Enum('ACTIVE', 'INACTIVE'), default='INACTIVE', nullable=False)
     created_at = Column(DateTime(6), nullable=False)
     updated_at = Column(DateTime(6), nullable=False)
