@@ -24,6 +24,17 @@ def patch_coverletter(db: Session, cover_letter_id, data):
   except NoResultFound:
     abort(400, description="Cover letter with ID {} not found.".format(coverletter_id))
 
+def patch_coverletter(db: Session, cover_letter_id, data):
+
+  cover_letter = db.query(Coverletter).filter(Coverletter.cover_letter_id==cover_letter_id).first()
+  if cover_letter:
+    cover_letter.keyword_1 = data['keyword1']
+    cover_letter.keyword_2 = data['keyword2']
+    cover_letter.job_keyword = data['job_keyword']
+    db.commit()
+  else:
+    return "Coverletter Not Found"
+
 def save_analysis(db: Session, cover_letter_id, job_suitability, skill_keywords):
   analysis = Analysis(
     cover_letter_id = cover_letter_id,
@@ -58,6 +69,15 @@ def get_active_model(db: Session):
 
   except NoResultFound:
     model_path = settings.KOBERT_DEFAULT
+
+  # 가져온 데이터셋 -> 'ACTIVE'로 벼경
+  # for dataset in datasets:
+  #   dataset.status = 'ACTIVE'
+  return datasets, dataset_list
+
+def get_active_model(db: Session):
+  model = db.query(Model).filter(Model.status == 'ACTIVE').one()
+  model_path = model.file_path
 
   return model_path
 
