@@ -12,7 +12,7 @@ import re
 
 ### Parameter
 max_length = 400
-batch_size = 8
+batch_size = 16
 warmup_ratio = 0.1
 num_epochs = 10
 max_grad_norm = 1
@@ -212,7 +212,7 @@ class ModelManager:
 
   def get_model(self, model_path):
     # model = torch.load(self.kobert_default)
-    model = torch.load(str(model_path))
+    model = torch.load(model_path)
     return model
   
   def next_version(self, past_file_name):
