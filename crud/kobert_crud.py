@@ -48,12 +48,6 @@ def get_inactive_dataset(db: Session) -> str:
   #   dataset.status = 'ACTIVE'
   return datasets, dataset_list
 
-def get_active_model(db: Session):
-  model = db.query(Model).filter(Model.status == 'ACTIVE').one()
-  model_path = model.file_path
-
-  return model_path
-
 def save_model(db: Session, file_name, version, accuracy, loss):
 
   model = Model(
@@ -69,4 +63,4 @@ def save_model(db: Session, file_name, version, accuracy, loss):
   db.add(model)
   db.commit()
 
-  return model.model_id
+  return model
