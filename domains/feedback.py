@@ -6,9 +6,8 @@ feedback = Table('feedback', metadata, autoload_with=engine)
 class Feedback(Base):
   __tablename__ = 'feedback'
 
-  solution_id = Column(BigInteger, primary_key=True)
   cover_letter_id = Column(Integer, nullable=False, unique=True)
-  solution_id = Column(Integer, primary_key=True, autoincrement=True)
+  feedback_id = Column(Integer, primary_key=True, autoincrement=True)
   correction = Column(Text, nullable=False)
   recommend_question_1 = Column(String(255), nullable=False)
   recommend_question_2 = Column(String(255), nullable=False)

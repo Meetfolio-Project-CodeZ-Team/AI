@@ -37,4 +37,4 @@ def save_feedback(db: Session, cover_letter_id, response):
   db.add(feedback)
   db.commit()
 
-  return feedback.solution_id
+  return feedback.feedback_id
