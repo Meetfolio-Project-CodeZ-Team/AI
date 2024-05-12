@@ -2,7 +2,7 @@ from flask import jsonify, json, request
 from db.connection import get_db
 from crud.gpt_crud import get_coverletter, save_feedback
 from apis.gpt import gpt_feedback, analysis_skill_keyword
-from crud.kobert_crud import get_inactive_dataset, save_model, patch_coverletter, save_analysis
+from crud.kobert_crud import get_inactive_dataset, save_model, patch_coverletter, save_analysis, get_active_model_path
 from apis.kobert import DataPreprocessor, DataLoaderBuilder, CustomDataset, KobertClassifier, ModelManager
 from apis.clova import ClovaSummarizer
 from crud.model_crud import change_model_status
@@ -10,7 +10,7 @@ from core.config import settings
 from flask_restx import Namespace, Resource, Api, fields
 from transformers import AutoTokenizer
 from datetime import datetime
-from db.redis import set_active_model, get_active_model
+from db.redis import set_active_model
 
 ai = Namespace("ai", description="AI 자기소개서 피드백 및 직무 역량 분석 API")
 ai_fields = ai.model('AI 공통 Request DTO', {
@@ -57,7 +57,7 @@ class Analysis(Resource):
     data_loadbuilder = DataLoaderBuilder()
     tokenizer = data_loadbuilder.get_tokenizer()
 
-    model_path = get_active_model()["file_path"]
+    model_path = get_active_model_path()
     model_manager = ModelManager()
     model = model_manager.get_model(model_path)
 
@@ -132,7 +132,7 @@ class ModelTrain(Resource):
     test_loader = data_loadbuilder.get_dataloader(test_encodings, test_labels)
 
     # 2. 모델 불러오기
-    model_path = get_active_model()["file_path"]
+    model_path = get_active_model_path()
     model_manager = ModelManager()
     model = model_manager.get_model(model_path)
     
