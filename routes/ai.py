@@ -159,7 +159,7 @@ class ModelTrain(Resource):
 class RedisGetTest(Resource):
   @ai.response(200, 'Success', model_change_response)
   def post(self,model_id ):
-    """모델 버전 변경 API"""
+    """모델 변경 API"""
     from_model = get_active_model()
     from_model_id = from_model["model_id"]
     # MYSQL DB 반영
