@@ -92,6 +92,13 @@ def gpt_feedback(job, keyword, content):
 
   recommend = recommend_title(job, content)
   result['recommend'] = extract_texts(recommend)
+  
+  # recommend 값이 없는 경우
+  re_list = ['해당 분야/직무를 잘 수행하기 위해 어떤 준비를 해왔는지 구체적으로 설명해주세요.', 
+            '본인이 끝까지 파고들어 본 가장 의미있었던 개발 경험 또는 개발 활동에 대해 얘기해 주세요.',
+            '본인의 개발 활동 경험 중 다른 사람과 함께 같은 목표를 위해 노력한 경험에 대해 얘기해 주세요.']
+  if (not result['recommend']):
+    result['recommend'] = re_list
 
   return result
 
