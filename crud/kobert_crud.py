@@ -24,17 +24,6 @@ def patch_coverletter(db: Session, cover_letter_id, data):
   except NoResultFound:
     abort(400, description="Cover letter with ID {} not found.".format(coverletter_id))
 
-def patch_coverletter(db: Session, cover_letter_id, data):
-
-  cover_letter = db.query(Coverletter).filter(Coverletter.cover_letter_id==cover_letter_id).first()
-  if cover_letter:
-    cover_letter.keyword_1 = data['keyword1']
-    cover_letter.keyword_2 = data['keyword2']
-    cover_letter.job_keyword = data['job_keyword']
-    db.commit()
-  else:
-    return "Coverletter Not Found"
-
 def save_analysis(db: Session, cover_letter_id, job_suitability, skill_keywords):
   analysis = Analysis(
     cover_letter_id = cover_letter_id,
@@ -48,7 +37,7 @@ def save_analysis(db: Session, cover_letter_id, job_suitability, skill_keywords)
   db.add(analysis)
   db.commit()
 
-  return 1
+  return analysis.analysis_id
 
 def get_inactive_dataset(db: Session) -> str:
   datasets = db.query(Dataset).filter(Dataset.status == 'INACTIVE').all()
