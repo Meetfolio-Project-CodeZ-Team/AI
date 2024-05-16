@@ -12,12 +12,12 @@ import re
 
 ### Parameter
 max_length = 400
-batch_size = 16
+batch_size = 4
 warmup_ratio = 0.1
 num_epochs = 10
 max_grad_norm = 1
 log_interval = 200
-learning_rate =  5e-5
+learning_rate =  2e-5
 ### ===================================== ###
 
 class DataPreprocessor:
