@@ -2,7 +2,7 @@ from flask import jsonify, json, request
 from db.connection import get_db
 from crud.gpt_crud import get_coverletter, save_feedback
 from apis.gpt import gpt_feedback, analysis_skill_keyword
-from crud.kobert_crud import get_inactive_dataset, get_active_model, save_model, patch_coverletter, save_analysis
+from crud.kobert_crud import get_inactive_dataset, get_active_model, save_model, save_analysis
 from apis.kobert import DataPreprocessor, DataLoaderBuilder, CustomDataset, KobertClassifier, ModelManager
 from apis.clova import ClovaSummarizer
 from core.config import settings
@@ -11,17 +11,15 @@ from transformers import AutoTokenizer
 from datetime import datetime
 
 ai = Namespace("ai", description="AI 자기소개서 피드백 및 직무 역량 분석 API")
-ai_fields = ai.model('AI 공통 Request DTO', {
-  'keyword1': fields.String(description="역량 키워드 1", required=True, example="문제 분석 능력"),
-  'keyword2': fields.String(description="역량 키워드 2", required=True, example="커뮤니케이션 능력"),
-  'job_keyword': fields.String(description="사용자 지원 직무", required=True, example="BACKEND")
-})
+
 analysis_response = ai.model('Analysis Response DTO', {
+  "analysis_id": fields.Integer(description="AI 직무 역량 분석, Analysis 아이디"),
   "job_suiability": fields.Float(description="AI 직무 역량 분석 결과"),
   "skill_keywords": fields.List(fields.String(description='사용자 두드러진 역량 키워드 리스트')),
   "job_keyword": fields.String(description="사용자 지원 직무")
 })
 feedback_response = ai.model('Feedback Response DTO', {
+  "feedback_id": fields.Integer(description="AI 피드백, Feedback 아이디"),
   "feedback": fields.String(description="AI 자기소개서 피드백 결과"),
   "recommend": fields.List(fields.String(description='AI 자기소개서 추천 문항 리스트'))
 })
@@ -39,7 +37,6 @@ class Analysis(Resource):
     db = get_db()
     session = next(db)
 
-    # patch_coverletter(session, cover_letter_id, data)
     result = get_coverletter(session, cover_letter_id)
     data = {"cover_letter_id": result.cover_letter_id,
             "answer": result.answer,
@@ -63,9 +60,10 @@ class Analysis(Resource):
     proba = kobert_model.predict_proba(outputs, data['job_keyword'])
 
     skill_keywords = analysis_skill_keyword(data['answer'])
-    save_analysis(session, cover_letter_id, proba, skill_keywords)
+    analysis_id = save_analysis(session, cover_letter_id, proba, skill_keywords)
 
-    return {"job_suitability": round(proba,4), "skill_keywords": skill_keywords, "job_keyword": data['job_keyword']}
+    return {"analysis_id": analysis_id, "job_suitability": round(proba,4), 
+            "skill_keywords": skill_keywords, "job_keyword": data['job_keyword']}
 
 
 @ai.route("/coverLetter-feedbacks/<int:cover_letter_id>")
@@ -86,12 +84,13 @@ class Feedback(Resource):
             "job_keyword": result.job_keyword}
     
     keyword = data["keyword1"] + "," + data["keyword2"]
-    response = gpt_feedback(data['job_keyword'], keyword, data['answer'])
+    response = gpt_feedback(data["job_keyword"], keyword, data["answer"])
 
     print(response)
 
     # 피드백 저장
-    save_feedback(session, cover_letter_id, response)
+    feedback_id = save_feedback(session, cover_letter_id, response)
+    response["feedback_id"] = feedback_id
 
     return jsonify(response)
 
