@@ -22,9 +22,8 @@ def get_coverletter(db: Session, coverletter_id: int):
   except NoResultFound:
     abort(400, description="Cover letter with ID {} not found.".format(coverletter_id))
 
-
-
 def save_feedback(db: Session, cover_letter_id, response):
+
   feedback = Feedback(
         cover_letter_id=cover_letter_id,
         correction=response['feedback'],
@@ -37,4 +36,4 @@ def save_feedback(db: Session, cover_letter_id, response):
   db.add(feedback)
   db.commit()
 
-  return feedback.solution_id
+  return feedback.feedback_id

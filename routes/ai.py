@@ -32,15 +32,14 @@ train_response = ai.model('Model Train Response DTO', {
 
 @ai.route("/coverLetter-analysis/<int:cover_letter_id>")
 class Analysis(Resource):
-  @ai.expect(ai_fields)
   @ai.response(200, 'Success', analysis_response)
   def post(self, cover_letter_id):
     """Kobert를 통한 AI 직무 역량 분석 API"""
-    data = request.json
+    # data = request.json
     db = get_db()
     session = next(db)
 
-    patch_coverletter(session, cover_letter_id, data)
+    # patch_coverletter(session, cover_letter_id, data)
     result = get_coverletter(session, cover_letter_id)
     data = {"cover_letter_id": result.cover_letter_id,
             "answer": result.answer,
@@ -71,15 +70,11 @@ class Analysis(Resource):
 
 @ai.route("/coverLetter-feedbacks/<int:cover_letter_id>")
 class Feedback(Resource):
-  @ai.expect(ai_fields)
   @ai.response(200, 'Success', feedback_response)
   def post(self, cover_letter_id):
     """GPT를 통한 AI 자기소개서 피드백 API"""
-    data = request.json
     db = get_db()
     session = next(db)
-
-    patch_coverletter(session, cover_letter_id, data)
     
     # 자기소개서 조회
     result = get_coverletter(session, cover_letter_id)
@@ -92,6 +87,8 @@ class Feedback(Resource):
     
     keyword = data["keyword1"] + "," + data["keyword2"]
     response = gpt_feedback(data['job_keyword'], keyword, data['answer'])
+
+    print(response)
 
     # 피드백 저장
     save_feedback(session, cover_letter_id, response)

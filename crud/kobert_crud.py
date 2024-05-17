@@ -73,12 +73,6 @@ def get_active_model(db: Session):
   # 가져온 데이터셋 -> 'ACTIVE'로 벼경
   # for dataset in datasets:
   #   dataset.status = 'ACTIVE'
-  return datasets, dataset_list
-
-def get_active_model(db: Session):
-  model = db.query(Model).filter(Model.status == 'ACTIVE').one()
-  model_path = model.file_path
-
   return model_path
 
 def save_model(db: Session, file_name, version, accuracy, loss):

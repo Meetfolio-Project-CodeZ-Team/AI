@@ -8,7 +8,7 @@ from crud.kobert_crud import get_active_model
 def create_app():
 
   app =Flask(__name__)
-  CORS(app, resources={r'*': {'origins': ['http://www.meetfolio.kro.kr', 'http://localhost:3000']}})
+  CORS(app, resources={r'*': {'origins': ['http://www.meetfolio.kro.kr', 'http://localhost:3000', 'http://www.meetfolio.kro.kr:60005']}})
   # API 객체 등록
   api = Api(
     app,
