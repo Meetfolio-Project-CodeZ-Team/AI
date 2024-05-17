@@ -8,6 +8,7 @@ from core.config import settings
 from datetime import datetime
 from sqlalchemy.orm.exc import NoResultFound
 from flask import abort
+from db.redis import get_active_model
 
 def patch_coverletter(db: Session, cover_letter_id, data):
 
@@ -62,10 +63,10 @@ def get_inactive_dataset(db: Session) -> str:
   
   return datasets, dataset_list
 
-def get_active_model(db: Session):
+def get_active_model_path():
   try:
-    model = db.query(Model).filter(Model.status == 'ACTIVE').one()
-    model_path = model.file_path
+    model = get_active_model()
+    model_path = model["file_path"]
 
   except NoResultFound:
     model_path = settings.KOBERT_DEFAULT
@@ -90,4 +91,4 @@ def save_model(db: Session, file_name, version, accuracy, loss):
   db.add(model)
   db.commit()
 
-  return model.model_id
+  return model

@@ -2,13 +2,15 @@ from flask import jsonify, json, request
 from db.connection import get_db
 from crud.gpt_crud import get_coverletter, save_feedback
 from apis.gpt import gpt_feedback, analysis_skill_keyword
-from crud.kobert_crud import get_inactive_dataset, get_active_model, save_model, patch_coverletter, save_analysis
+from crud.kobert_crud import get_inactive_dataset, save_model, patch_coverletter, save_analysis, get_active_model_path
 from apis.kobert import DataPreprocessor, DataLoaderBuilder, CustomDataset, KobertClassifier, ModelManager
 from apis.clova import ClovaSummarizer
+from crud.model_crud import change_model_status
 from core.config import settings
 from flask_restx import Namespace, Resource, Api, fields
 from transformers import AutoTokenizer
 from datetime import datetime
+from db.redis import set_active_model
 
 ai = Namespace("ai", description="AI 자기소개서 피드백 및 직무 역량 분석 API")
 ai_fields = ai.model('AI 공통 Request DTO', {
@@ -29,6 +31,12 @@ train_response = ai.model('Model Train Response DTO', {
   "model_id": fields.Integer(description="모델 아이디"),
   "created_at": fields.DateTime(description="요청 응답 시간")
 })
+model_change_response = ai.model('Model Change Response DTO',{
+  "model_id" : fields.Integer(description="모델 아이디"),
+  "name": fields.String(description="모델명"),
+  "version": fields.String(description="버전"),
+  "file_path": fields.String(description="파일 경로")
+})
 
 @ai.route("/coverLetter-analysis/<int:cover_letter_id>")
 class Analysis(Resource):
@@ -48,7 +56,7 @@ class Analysis(Resource):
     data_loadbuilder = DataLoaderBuilder()
     tokenizer = data_loadbuilder.get_tokenizer()
 
-    model_path = get_active_model(session)
+    model_path = get_active_model_path()
     model_manager = ModelManager()
     model = model_manager.get_model(model_path)
 
@@ -95,7 +103,6 @@ class Feedback(Resource):
 
     return jsonify(response)
 
-
 @ai.route("/admins/model-management/train")
 class ModelTrain(Resource):
   @ai.response(200, 'Success', train_response)
@@ -122,7 +129,7 @@ class ModelTrain(Resource):
     test_loader = data_loadbuilder.get_dataloader(test_encodings, test_labels)
 
     # 2. 모델 불러오기
-    model_path = get_active_model(session)
+    model_path = get_active_model_path()
     model_manager = ModelManager()
     model = model_manager.get_model(model_path)
     
@@ -135,11 +142,28 @@ class ModelTrain(Resource):
 
     # 5. 새 모델 저장
     new_model, new_version = model_manager.save_model(model, model_path)
-    model_id = save_model(session, new_model, new_version, accuracy, average_loss)
+    saved_model = save_model(session, new_model, new_version, accuracy, average_loss)
+    set_active_model(saved_model.model_id, new_model, new_version, saved_model.file_path)
 
     # 6. 가져온 데이터셋 -> ACTIVE
     for dataset in datasets:
       dataset.status = 'ACTIVE'
     session.commit()
 
-    return {"model_id": model_id, "created_at": datetime.now().isoformat()}
+    return {"model_id": saved_model.model_id, "created_at": datetime.now().isoformat()}
+
+@ai.route("/api/admins/model-management/version/<int:model_id>")
+class RedisGetTest(Resource):
+  @ai.response(200, 'Success', model_change_response)
+  def post(self,model_id ):
+    """모델 변경 API"""
+    from_model = get_active_model()
+    from_model_id = from_model["model_id"]
+    # MYSQL DB 반영
+    db = get_db()
+    session = next(db)
+    to_model = change_model_status(session, model_id, from_model_id)
+    # REDIS DB 반영
+    set_active_model(to_model.model_id, to_model.name, to_model.version, to_model.file_path)
+    changed_model = get_active_model()
+    return changed_model

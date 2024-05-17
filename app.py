@@ -3,7 +3,8 @@ from routes.ai import ai
 from db.connection import get_db
 from flask_restx import Api, Resource
 from flask_cors import CORS
-from crud.kobert_crud import get_active_model
+# from crud.kobert_crud import get_active_model
+from db.redis import set_active_model,get_active_model
 
 def create_app():
 
@@ -18,17 +19,13 @@ def create_app():
     terms_url="/",
   )
   api.add_namespace(ai, "/api")
-
  
-  ## RequestBody 테스트
   @api.route("/test")
   class Test(Resource):
     def post(self):
-      """HELLO FLASK"""
-      db = get_db()
-      session = next(db)
-      result = get_active_model(session)
-
+      """현재 버전 확인"""
+      # set_active_model(1,"meetfolio-model",1.00,"/home/t24105/v0.9src/ai/model/meetfolio_model_v1.pt")
+      result = get_active_model()
       return result
     
   return app
