@@ -199,7 +199,7 @@ class KobertClassifier:
 class ModelManager:
 
   def __init__(self):
-    self.path = settings.MODEL_PATH
+    self.path = settings.MODEL_PATH_TEST
     self.model_name = settings.MODEL_NAME
     self.kobert_default = settings.KOBERT_DEFAULT 
 
@@ -212,7 +212,7 @@ class ModelManager:
 
   def get_model(self, model_path):
     # model = torch.load(self.kobert_default)
-    model = torch.load(model_path)
+    model = torch.load(str(model_path))
     return model
   
   def next_version(self, past_file_name):
