@@ -10,7 +10,7 @@ from core.config import settings
 from flask_restx import Namespace, Resource, Api, fields
 from transformers import AutoTokenizer
 from datetime import datetime
-from db.redis import set_active_model
+from db.redis import set_active_model, get_active_model
 
 ai = Namespace("ai", description="AI 자기소개서 피드백 및 직무 역량 분석 API")
 ai_fields = ai.model('AI 공통 Request DTO', {
