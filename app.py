@@ -24,7 +24,6 @@ def create_app():
   class Test(Resource):
     def post(self):
       """현재 버전 확인"""
-      set_active_model(1, "meetfolio_model", "1.0.0", "/home/t24105/v0.9src/ai/model/meetfolio_model_v1.0.0.pt")
       return get_active_model()
     
   return app
