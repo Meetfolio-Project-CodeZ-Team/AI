@@ -8,6 +8,7 @@ from torch.utils.data import DataLoader, Dataset
 from tqdm.auto import tqdm
 import torch.nn.functional as F
 from core.config import settings
+from db.redis import get_version_info, set_version_info
 import re
 
 ### Parameter
@@ -204,10 +205,10 @@ class ModelManager:
     self.kobert_default = settings.KOBERT_DEFAULT 
 
   def save_model(self, model, past_file_name):
-    new_version = self.next_version(past_file_name)
+    # new_version = self.next_version(past_file_name)
+    new_version = self.next_alpha_version(past_file_name)
     new_file_name = self.model_name + new_version + '.pt'
     torch.save(model, self.path + new_file_name)
-
     return new_file_name, new_version
 
   def get_model(self, model_path):
@@ -216,7 +217,7 @@ class ModelManager:
     return model
   
   def next_version(self, past_file_name):
-    pattern = r"meetfolio_model_v([\d.]+).pt"
+    pattern = r"meetfolio_model_v(\d+\.\d+)\.(\d+)\.pt"
     match = re.search(pattern, past_file_name)
     if match:
       version_str = match.group(1)
@@ -225,3 +226,16 @@ class ModelManager:
       return str(new_version)
     else:
       return 1
+
+  def next_alpha_version(self, active_file_path):
+    active_model = active_file_path.replace(self.path, "")
+    pattern = r"meetfolio_model_v(\d+\.\d+)\.(\d+)\.pt"
+    match = re.search(pattern, active_model)
+    if match:
+      # 원본 모델 버전
+      version = match.group(1)
+      version_info = get_version_info(version)
+      trained_count = version_info["trained_count"]
+      return str(version)+ "." + str(trained_count+1)
+      
+
