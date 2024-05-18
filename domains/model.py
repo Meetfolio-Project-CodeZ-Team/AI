@@ -12,7 +12,7 @@ class Model(Base):
   file_path = Column(String(255), nullable=False)
   accuracy = Column(Float, nullable=False)
   loss = Column(Float, nullable=False)
-  version = Column(Numeric(precision=38, scale=2), nullable=False)
+  version = Column(String(255), nullable=False)
   status = Column(Enum('ACTIVE', 'INACTIVE'), default='INACTIVE', nullable=False)
   activated_date = Column(DateTime(6), nullable=False)
   created_at = Column(DateTime(6), nullable=False)
