@@ -25,17 +25,6 @@ def patch_coverletter(db: Session, cover_letter_id, data):
   except NoResultFound:
     abort(400, description="Cover letter with ID {} not found.".format(coverletter_id))
 
-def patch_coverletter(db: Session, cover_letter_id, data):
-
-  cover_letter = db.query(Coverletter).filter(Coverletter.cover_letter_id==cover_letter_id).first()
-  if cover_letter:
-    cover_letter.keyword_1 = data['keyword1']
-    cover_letter.keyword_2 = data['keyword2']
-    cover_letter.job_keyword = data['job_keyword']
-    db.commit()
-  else:
-    return "Coverletter Not Found"
-
 def save_analysis(db: Session, cover_letter_id, job_suitability, skill_keywords):
   analysis = Analysis(
     cover_letter_id = cover_letter_id,
@@ -49,7 +38,7 @@ def save_analysis(db: Session, cover_letter_id, job_suitability, skill_keywords)
   db.add(analysis)
   db.commit()
 
-  return 1
+  return analysis.analysis_id
 
 def get_inactive_dataset(db: Session) -> str:
   datasets = db.query(Dataset).filter(Dataset.status == 'INACTIVE').all()
@@ -91,4 +80,16 @@ def save_model(db: Session, file_name, version, accuracy, loss):
   db.add(model)
   db.commit()
 
-  return model
+  return model.model_id
+
+def check_analysis(db: Session, cover_letter_id: int):
+  try:
+    analysis = db.query(Analysis).filter(Analysis.cover_letter_id == cover_letter_id).one_or_none()
+
+    if analysis:
+      abort(400, description = "이미 존재하는 analysis입니다. 1개의 AI 직무역량만 받으실 수 있습니다.")
+    
+    return True
+    
+  except NoResultFound:
+    abort(400, description="Cover letter with ID {} not found.".format(cover_letter_id))

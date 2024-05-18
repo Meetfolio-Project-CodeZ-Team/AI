@@ -20,7 +20,7 @@ def get_coverletter(db: Session, coverletter_id: int):
     
     return cover_letter
   except NoResultFound:
-    abort(400, description="Cover letter with ID {} not found.".format(coverletter_id))
+    abort(400, description="Cover letter with ID {} not found.".format(cover_letter_id))
 
 def save_feedback(db: Session, cover_letter_id, response):
 
@@ -37,3 +37,15 @@ def save_feedback(db: Session, cover_letter_id, response):
   db.commit()
 
   return feedback.feedback_id
+
+def check_feedback(db: Session, cover_letter_id: int):
+  try:
+    feedback = db.query(Feedback).filter(Feedback.cover_letter_id == cover_letter_id).one_or_none()
+
+    if feedback:
+      abort(400, description = "이미 존재하는 feedback입니다. 1개의 피드백만 받으실 수 있습니다.")
+    
+    return True
+    
+  except NoResultFound:
+    abort(400, description="Cover letter with ID {} not found.".format(cover_letter_id))
