@@ -80,3 +80,15 @@ def save_model(db: Session, file_name, version, accuracy, loss):
   db.commit()
 
   return model.model_id
+
+def check_analysis(db: Session, cover_letter_id: int):
+  try:
+    analysis = db.query(Analysis).filter(Analysis.cover_letter_id == cover_letter_id).one_or_none()
+
+    if analysis:
+      abort(400, description = "이미 존재하는 analysis입니다. 1개의 AI 직무역량만 받으실 수 있습니다.")
+    
+    return True
+    
+  except NoResultFound:
+    abort(400, description="Cover letter with ID {} not found.".format(cover_letter_id))

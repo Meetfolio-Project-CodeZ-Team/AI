@@ -1,8 +1,8 @@
 from flask import jsonify, json, request
 from db.connection import get_db
-from crud.gpt_crud import get_coverletter, save_feedback
+from crud.gpt_crud import get_coverletter, save_feedback, check_feedback
 from apis.gpt import gpt_feedback, analysis_skill_keyword
-from crud.kobert_crud import get_inactive_dataset, get_active_model, save_model, save_analysis
+from crud.kobert_crud import get_inactive_dataset, get_active_model, save_model, save_analysis, check_analysis
 from apis.kobert import DataPreprocessor, DataLoaderBuilder, CustomDataset, KobertClassifier, ModelManager
 from apis.clova import ClovaSummarizer
 from core.config import settings
@@ -36,6 +36,9 @@ class Analysis(Resource):
     # data = request.json
     db = get_db()
     session = next(db)
+
+    # 존재하는 직무 역량 분석인지 확인
+    check_analysis(session, cover_letter_id)
 
     result = get_coverletter(session, cover_letter_id)
     data = {"cover_letter_id": result.cover_letter_id,
@@ -73,6 +76,9 @@ class Feedback(Resource):
     """GPT를 통한 AI 자기소개서 피드백 API"""
     db = get_db()
     session = next(db)
+
+    # 존재하는 피드백인지 확인
+    check_feedback(session, cover_letter_id)
     
     # 자기소개서 조회
     result = get_coverletter(session, cover_letter_id)
