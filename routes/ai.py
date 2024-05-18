@@ -159,7 +159,6 @@ class ModelTrain(Resource):
       # 5. 새 모델 저장
       new_model, new_version = model_manager.save_model(model, model_path)
       saved_model = save_model(session, new_model, new_version, accuracy, average_loss)
-      set_active_model(saved_model.model_id, new_model, new_version, saved_model.file_path)
       set_version_info(version, new_version, trained_count+1)
 
       # 6. 가져온 데이터셋 -> ACTIVE

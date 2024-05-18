@@ -77,7 +77,7 @@ def save_model(db: Session, file_name, version, accuracy, loss):
   db.add(model)
   db.commit()
 
-  return model.model_id
+  return model
 
 def check_analysis(db: Session, cover_letter_id: int):
   try:
