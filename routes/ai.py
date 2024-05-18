@@ -168,7 +168,7 @@ class ModelTrain(Resource):
 
       return {"model_id": saved_model.model_id, "created_at": datetime.now().isoformat()}
 
-@ai.route("/api/admins/model-management/version/<int:model_id>")
+@ai.route("/admins/model-management/version/<int:model_id>")
 class RedisGetTest(Resource):
   @ai.response(200, 'Success', model_change_response)
   def post(self,model_id ):
