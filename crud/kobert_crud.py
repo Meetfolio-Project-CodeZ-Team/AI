@@ -60,9 +60,6 @@ def get_active_model_path():
   except NoResultFound:
     model_path = settings.KOBERT_DEFAULT
 
-  # 가져온 데이터셋 -> 'ACTIVE'로 벼경
-  # for dataset in datasets:
-  #   dataset.status = 'ACTIVE'
   return model_path
 
 def save_model(db: Session, file_name, version, accuracy, loss):
