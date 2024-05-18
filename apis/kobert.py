@@ -199,7 +199,7 @@ class KobertClassifier:
 class ModelManager:
 
   def __init__(self):
-    self.path = settings.MODEL_PATH_TEST
+    self.path = settings.MODEL_PATH
     self.model_name = settings.MODEL_NAME
     self.kobert_default = settings.KOBERT_DEFAULT 
 
