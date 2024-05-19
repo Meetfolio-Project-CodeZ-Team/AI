@@ -20,7 +20,6 @@ class Settings:
   KOBERT_DEFAULT=os.getenv("KOBERT_DEFAULT")
 
   MODEL_PATH=os.getenv("MODEL_PATH")
-  MODEL_PATH_TEST=os.getenv("MODEL_PATH_TEST")
   MODEL_NAME=os.getenv("MODEL_NAME")
 
   REDIS_HOST=os.getenv("REDIS_HOST")

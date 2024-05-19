@@ -2,7 +2,7 @@ from flask import jsonify, json, request
 from db.connection import get_db
 from crud.gpt_crud import get_coverletter, save_feedback, check_feedback
 from apis.gpt import gpt_feedback, analysis_skill_keyword
-from crud.kobert_crud import get_inactive_dataset, get_active_model, save_model, save_analysis, check_analysis
+from crud.kobert_crud import get_inactive_dataset, get_active_model_path, save_model, save_analysis, check_analysis
 from apis.kobert import DataPreprocessor, DataLoaderBuilder, CustomDataset, KobertClassifier, ModelManager
 from apis.clova import ClovaSummarizer
 from crud.model_crud import change_model_status
@@ -10,7 +10,8 @@ from core.config import settings
 from flask_restx import Namespace, Resource, Api, fields
 from transformers import AutoTokenizer
 from datetime import datetime
-from db.redis import set_active_model, get_active_model
+from db.redis import set_active_model, get_active_model, get_version_info, set_version_info
+import re
 
 ai = Namespace("ai", description="AI 자기소개서 피드백 및 직무 역량 분석 API")
 
@@ -114,50 +115,60 @@ class ModelTrain(Resource):
   def post(self):
     """Kobert 모델 추가 학습 API"""
 
-    # 0. DB 초기화
-    db = get_db()
-    session = next(db)
+    # 추가학습 초과 알림
+    active_model_version = get_active_model()["version"]
+    pattern = r"(\d+\.\d+)\.\d+"
+    match = re.match(pattern, active_model_version)
+    version = match.group(1)
+    version_info = get_version_info(version)
+    trained_count = version_info["trained_count"]
+    if trained_count+1 > 9: 
+      abort(400, description = "학습할 수 있는 횟수를 초과하였습니다. 관리자에게 문의 바랍니다.")
+    else:
+      # 0. DB 초기화
+      db = get_db()
+      session = next(db)
 
-    # 0. Class 초기화
-    data_preprocessor = DataPreprocessor()
-    data_loadbuilder = DataLoaderBuilder()
-    
-    # 1. 학습할 데이터 가져오기
-    datasets, dataset_list = get_inactive_dataset(session)
-    train_texts, test_texts, train_labels, test_labels = data_preprocessor.preprocess_data(dataset_list)
+      # 0. Class 초기화
+      data_preprocessor = DataPreprocessor()
+      data_loadbuilder = DataLoaderBuilder()
+      
+      # 1. 학습할 데이터 가져오기
+      datasets, dataset_list = get_inactive_dataset(session)
+      train_texts, test_texts, train_labels, test_labels = data_preprocessor.preprocess_data(dataset_list)
 
-    train_encodings = data_loadbuilder.get_encoding(train_texts)
-    test_encodings = data_loadbuilder.get_encoding(test_texts)
-    kobert_tokenizer = data_loadbuilder.get_tokenizer()
+      train_encodings = data_loadbuilder.get_encoding(train_texts)
+      test_encodings = data_loadbuilder.get_encoding(test_texts)
+      kobert_tokenizer = data_loadbuilder.get_tokenizer()
 
-    train_loader = data_loadbuilder.get_dataloader(train_encodings, train_labels)
-    test_loader = data_loadbuilder.get_dataloader(test_encodings, test_labels)
+      train_loader = data_loadbuilder.get_dataloader(train_encodings, train_labels)
+      test_loader = data_loadbuilder.get_dataloader(test_encodings, test_labels)
 
-    # 2. 모델 불러오기
-    model_path = get_active_model_path()
-    model_manager = ModelManager()
-    model = model_manager.get_model(model_path)
-    
-    # 3. 모델 초기화
-    kobert_model = KobertClassifier(model, kobert_tokenizer)
+      # 2. 모델 불러오기
+      model_path = get_active_model_path()
+      model_manager = ModelManager()
+      model = model_manager.get_model(model_path)
+      
+      # 3. 모델 초기화
+      kobert_model = KobertClassifier(model, kobert_tokenizer)
 
-    # 4. 모델 추가 학습
-    average_loss = kobert_model.train(train_loader)
-    accuracy = kobert_model.evaluate(train_loader)
+      # 4. 모델 추가 학습
+      average_loss = kobert_model.train(train_loader)
+      accuracy = kobert_model.evaluate(train_loader)
 
-    # 5. 새 모델 저장
-    new_model, new_version = model_manager.save_model(model, model_path)
-    saved_model = save_model(session, new_model, new_version, accuracy, average_loss)
-    set_active_model(saved_model.model_id, new_model, new_version, saved_model.file_path)
+      # 5. 새 모델 저장
+      new_model, new_version = model_manager.save_model(model, model_path)
+      saved_model = save_model(session, new_model, new_version, accuracy, average_loss)
+      set_version_info(version, new_version, trained_count+1)
 
-    # 6. 가져온 데이터셋 -> ACTIVE
-    for dataset in datasets:
-      dataset.status = 'ACTIVE'
-    session.commit()
+      # 6. 가져온 데이터셋 -> ACTIVE
+      for dataset in datasets:
+        dataset.status = 'ACTIVE'
+      session.commit()
 
-    return {"model_id": saved_model.model_id, "created_at": datetime.now().isoformat()}
+      return {"model_id": saved_model.model_id, "created_at": datetime.now().isoformat()}
 
-@ai.route("/api/admins/model-management/version/<int:model_id>")
+@ai.route("/admins/model-management/version/<int:model_id>")
 class RedisGetTest(Resource):
   @ai.response(200, 'Success', model_change_response)
   def post(self,model_id ):
