@@ -79,6 +79,7 @@ def save_model(db: Session, file_name, version, accuracy, loss):
 
   return model
 
+
 def check_analysis(db: Session, cover_letter_id: int):
   try:
     analysis = db.query(Analysis).filter(Analysis.cover_letter_id == cover_letter_id).one_or_none()
