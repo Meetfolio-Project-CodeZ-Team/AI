@@ -7,3 +7,4 @@ langchain-community==0.0.34
 Flask-Cors
 flask_restx
 gunicorn
+redis
