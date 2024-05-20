@@ -79,7 +79,7 @@ class Analysis(Resource):
     skill_keywords = analysis_skill_keyword(data['answer'])
     analysis_id = save_analysis(session, cover_letter_id, proba, skill_keywords)
 
-    return {"analysis_id": analysis_id, "job_suitability": round(proba,4), 
+    return {"analysis_id": analysis_id, "job_suitability": round(proba * 100), 
             "skill_keywords": skill_keywords, "job_keyword": data['job_keyword']}
 
 
