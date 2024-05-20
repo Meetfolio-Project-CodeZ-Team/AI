@@ -215,17 +215,6 @@ class ModelManager:
     # model = torch.load(self.kobert_default)
     model = torch.load(str(model_path))
     return model
-  
-  def next_version(self, past_file_name):
-    pattern = r"meetfolio_model_v(\d+\.\d+)\.(\d+)\.pt"
-    match = re.search(pattern, past_file_name)
-    if match:
-      version_str = match.group(1)
-      version = float(version_str)
-      new_version = version + 0.1
-      return str(new_version)
-    else:
-      return 1
 
   def next_alpha_version(self, active_file_path):
     active_model = active_file_path.replace(self.path, "")
@@ -236,6 +225,6 @@ class ModelManager:
       version = match.group(1)
       version_info = get_version_info(version)
       trained_count = version_info["trained_count"]
-      return str(version)+ "." + str(trained_count+1)
+      return str(version)+ "." + str(trained_count+1) + "_dev"
       
 
