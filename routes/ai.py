@@ -6,7 +6,7 @@ from apis.gpt import gpt_feedback, analysis_skill_keyword
 from crud.kobert_crud import get_inactive_dataset, get_active_model_path, save_model, save_analysis, check_analysis
 from apis.kobert import DataPreprocessor, DataLoaderBuilder, CustomDataset, KobertClassifier, ModelManager
 from apis.clova import ClovaSummarizer
-from crud.model_crud import change_model_status, soft_delete_model
+from crud.model_crud import change_model_status, soft_delete_model, get_model
 from core.config import settings
 from flask_restx import Namespace, Resource, Api, fields
 from transformers import AutoTokenizer
@@ -196,8 +196,8 @@ class ModelDelete(Resource):
     """개발자 모델(파일) 삭제 API"""
     db = get_db()
     session = next(db)
-    file_path = get_model(db, model_id).file_path
+    file_path = get_model(session, model_id).file_path
     if os.path.exists(file_path):
       os.remove(file_path)
-    soft_delete_model(db, model_id)
+    soft_delete_model(session, model_id)
     return {"model_id": model_id, "deleted_at": datetime.now().isoformat()}

@@ -19,7 +19,7 @@ def change_model_status(db: Session, to_model_id: int, from_model_id: int):
 
 def soft_delete_model(db: Session, model_id: int):
   model_to_delete = get_model(db, model_id)
-  if model_to_delete and model.version_status == 'DEPRECATED':
+  if model_to_delete and model_to_delete.version_status == 'DEPRECATED':
     model_to_delete.version_status = 'OBSOLETE'
     db.commit()
   else:
