@@ -17,7 +17,7 @@ ai = Namespace("ai", description="AI 자기소개서 피드백 및 직무 역량
 
 analysis_response = ai.model('Analysis Response DTO', {
   "analysis_id": fields.Integer(description="AI 직무 역량 분석, Analysis 아이디"),
-  "job_suiability": fields.Float(description="AI 직무 역량 분석 결과"),
+  "job_suitability": fields.Float(description="AI 직무 역량 분석 결과"),
   "skill_keywords": fields.List(fields.String(description='사용자 두드러진 역량 키워드 리스트')),
   "job_keyword": fields.String(description="사용자 지원 직무")
 })
