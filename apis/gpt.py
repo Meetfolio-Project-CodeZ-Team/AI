@@ -121,6 +121,20 @@ def extract_texts(text):
 
     return extracted_texts
 
+def analysis_extract_texts(text):
+  # matches = re.findall(r'\d+\.\s([^\n]+)', text, re.DOTALL)
+
+  extracted_texts = []
+  # for match in matches:
+  #   num, text = match
+  #   text = re.sub(r'[\"/\\\n]', '', text)
+  #   extracted_texts.append(text)
+  values = re.sub(r'\d+\.\s', '', text).split('\n')
+  for value in values:
+    extracted_texts.append(value)
+  
+  return extracted_texts
+
 ## ==================== ##
 
 # kobert 두드러진 역량 분석
@@ -133,7 +147,7 @@ def analysis_skill_keyword(content):
   analysis_template = '''
       당신은 IT 기업의 채용 담당자로서, 자기소개서를 분석하여 지원자의 역량을 추출하는 역할을 맡고 있습니다.
       다양한 자기소개서를 검토하며, 현재 IT 기술에 대한 깊은 이해를 바탕으로 지원자의 뛰어난 역량을 반드시 10글자 이하로 3개 추출합니다.
-      예를 들어 "커뮤니케이션 및 협업", "프로젝트 계획 및 관리", "문제 해결 및 결정력"과 같이 구체적 단어가 아닌, 개념적인 단어로 역량을 반드시 10글자 이하로 3개 추출합니다.
+      예를 들어 "1. 커뮤니케이션 및 협업", "2. 프로젝트 계획 및 관리", "3. 문제 해결 및 결정력"과 같이 구체적 단어가 아닌, 개념적인 단어로 역량을 반드시 10글자 이하로 3개 추출합니다.
       아래는 지원자의 자기소개서 내용입니다.
 
       - 아래
@@ -154,6 +168,7 @@ def analysis_skill_keyword(content):
   )
   result = chatgpt(chat_prompt.format_prompt(content=content).to_messages())
 
-  skill_keyword = extract_texts(result.content)
+  print(result)
+  skill_keyword = analysis_extract_texts(result.content)
 
   return skill_keyword
