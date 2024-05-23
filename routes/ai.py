@@ -1,3 +1,4 @@
+import os
 from flask import jsonify, json, request
 from db.connection import get_db
 from crud.gpt_crud import get_coverletter, save_feedback, check_feedback
@@ -5,7 +6,7 @@ from apis.gpt import gpt_feedback, analysis_skill_keyword
 from crud.kobert_crud import get_inactive_dataset, get_active_model_path, save_model, save_analysis, check_analysis
 from apis.kobert import DataPreprocessor, DataLoaderBuilder, CustomDataset, KobertClassifier, ModelManager
 from apis.clova import ClovaSummarizer
-from crud.model_crud import change_model_status
+from crud.model_crud import change_model_status, soft_delete_model, get_model
 from core.config import settings
 from flask_restx import Namespace, Resource, Api, fields
 from transformers import AutoTokenizer
@@ -35,6 +36,10 @@ model_change_response = ai.model('Model Change Response DTO',{
   "name": fields.String(description="모델명"),
   "version": fields.String(description="버전"),
   "file_path": fields.String(description="파일 경로")
+})
+delete_response = ai.model('Model Delete Response DTO', {
+  "model_id": fields.Integer(description="모델 아이디"),
+  "created_at": fields.DateTime(description="요청 응답 시간")
 })
 
 @ai.route("/coverLetter-analysis/<int:cover_letter_id>")
@@ -74,7 +79,7 @@ class Analysis(Resource):
     skill_keywords = analysis_skill_keyword(data['answer'])
     analysis_id = save_analysis(session, cover_letter_id, proba, skill_keywords)
 
-    return {"analysis_id": analysis_id, "job_suitability": round(proba,4), 
+    return {"analysis_id": analysis_id, "job_suitability": round(proba * 100), 
             "skill_keywords": skill_keywords, "job_keyword": data['job_keyword']}
 
 
@@ -169,7 +174,7 @@ class ModelTrain(Resource):
       return {"model_id": saved_model.model_id, "created_at": datetime.now().isoformat()}
 
 @ai.route("/admins/model-management/version/<int:model_id>")
-class RedisGetTest(Resource):
+class VesionControl(Resource):
   @ai.response(200, 'Success', model_change_response)
   def post(self,model_id ):
     """모델 변경 API"""
@@ -183,3 +188,16 @@ class RedisGetTest(Resource):
     set_active_model(to_model.model_id, to_model.name, to_model.version, to_model.file_path)
     changed_model = get_active_model()
     return changed_model
+
+@ai.route("/developer/model/<int:model_id>")
+class ModelDelete(Resource):
+  @ai.response(200, 'Success', model_change_response)
+  def delete(self, model_id):
+    """개발자 모델(파일) 삭제 API"""
+    db = get_db()
+    session = next(db)
+    file_path = get_model(session, model_id).file_path
+    if os.path.exists(file_path):
+      os.remove(file_path)
+    soft_delete_model(session, model_id)
+    return {"model_id": model_id, "deleted_at": datetime.now().isoformat()}

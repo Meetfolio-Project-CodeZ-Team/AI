@@ -15,5 +15,6 @@ class Model(Base):
   version = Column(String(255), nullable=False)
   status = Column(Enum('ACTIVE', 'INACTIVE'), default='INACTIVE', nullable=False)
   activated_date = Column(DateTime(6), nullable=False)
+  version_status = Column(Enum('DEPRECATED', 'OBSOLETE'), nullable=True)
   created_at = Column(DateTime(6), nullable=False)
   updated_at = Column(DateTime(6), nullable=False)
