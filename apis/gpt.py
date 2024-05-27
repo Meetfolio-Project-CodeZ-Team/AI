@@ -116,8 +116,8 @@ def extract_texts(text):
     extracted_texts = []
     for match in matches:
         num, text = match
-        text = re.sub(r'[\"/\\\n]', '', text)
-        extracted_texts.append(text)
+        text = re.sub(r'[^.\w\s+|\n]', '', text)
+        extracted_texts.append(text.strip())
 
     return extracted_texts
 
